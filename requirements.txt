@@ -1,0 +1,11 @@
+pandas
+numpy
+scikit-learn
+streamlit
+matplotlib
+plotly
+
+# Conector de base de datos
+# Por defecto se usa SQLite (incluido en la librería estándar de Python, no requiere instalación).
+# Si el equipo decide migrar a PostgreSQL, descomentar la siguiente línea:
+# psycopg2-binary

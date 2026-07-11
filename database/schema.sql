@@ -1,0 +1,18 @@
+-- schema.sql
+--
+-- Responsable: Persona 1 (Datos)
+--
+-- Propósito:
+-- Definición de las tablas de la base de datos del sistema de recomendación:
+-- canciones, artistas, generos y recomendaciones.
+--
+-- TODO:
+-- - Definir tabla `artistas` (id, name, followers, popularity, main_genre, ...).
+-- - Definir tabla `generos` (relación artista-género, dado que un artista
+--   puede tener múltiples géneros).
+-- - Definir tabla `canciones` (id, name, album_name, artist_id (FK),
+--   danceability, energy, key, loudness, mode, speechiness, mood, ...).
+-- - Definir tabla `recomendaciones` (canción origen, canción recomendada,
+--   score de similitud, fecha de cálculo).
+-- - Definir claves primarias, foráneas e índices necesarios para las
+--   consultas del motor de recomendación.

@@ -1,0 +1,18 @@
+# Datasets (se descargan aparte, ver data/README.md)
+data/*.csv
+!data/README.md
+
+# Python
+__pycache__/
+*.pyc
+
+# Entornos virtuales
+venv/
+.venv/
+
+# Bases de datos SQLite
+*.db
+
+# Configuración de editores
+.vscode/
+.idea/
