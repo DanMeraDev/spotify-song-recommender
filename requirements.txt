@@ -1,7 +1,10 @@
-pandas
-numpy
-scikit-learn
-streamlit
+# Nota: el proyecto corre sobre Python 3.14, para el que (por ahora) solo hay
+# wheels de las versiones más recientes de numpy/pandas. Se fijan las versiones
+# instaladas que funcionan en este intérprete.
+numpy>=2.5
+pandas>=3.0
+scikit-learn>=1.9
+streamlit>=1.59
 matplotlib
 plotly
 

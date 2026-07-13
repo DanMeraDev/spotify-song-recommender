@@ -1,6 +1,7 @@
 # Datasets (se descargan aparte, ver data/README.md)
 data/*.csv
 !data/README.md
+/*.csv
 
 # Python
 __pycache__/
