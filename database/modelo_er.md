@@ -2,8 +2,9 @@
 
 Responsable: Persona 1 (Datos)
 
-Base de datos relacional del sistema (SQLite, `data/spotify.db`), poblada por
-`etl/load.py` según `database/schema.sql`.
+Base de datos relacional del sistema (PostgreSQL), poblada por `etl/load.py` según
+`database/schema.sql`. El backend (`backend/catalog.py`) reconstruye el catálogo de
+trabajo con un JOIN `canciones` ⋈ `artistas`.
 
 ## Diagrama ER
 
@@ -20,11 +21,13 @@ erDiagram
         INTEGER followers
         INTEGER popularity
         TEXT main_genre
+        TEXT genres
     }
     CANCIONES {
         TEXT id PK
         TEXT name
         TEXT album_name
+        TEXT artists
         TEXT artist_id FK
         REAL danceability
         REAL energy
@@ -52,6 +55,7 @@ erDiagram
         TEXT song_recomendada_id FK
         REAL score
         INTEGER rank
+        TIMESTAMPTZ creado_en
     }
 ```
 
@@ -71,5 +75,8 @@ erDiagram
   de similitud coseno, evitando recalcularlas en cada consulta.
 - `mood_quadrant` es un atributo derivado (modelo de Russell) calculado en el ETL.
 - El campo `genres` (lista) de cada artista se descompone en la tabla `generos` para
-  permitir consultas relacionales por género, además de conservarse denormalizado en el
-  catálogo CSV que consume el motor.
+  permitir consultas relacionales por género, y se conserva también como texto en
+  `artistas.genres` para que el motor de recomendación evalúe coincidencias de subgénero
+  sin tener que desnormalizar la tabla `generos` en cada consulta.
+- `canciones.artists` guarda la lista de colaboradores (texto) solo para mostrarla en la
+  UI; el artista principal usado por el motor y el JOIN es `canciones.artist_id`.

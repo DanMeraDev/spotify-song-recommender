@@ -1,14 +1,7 @@
-# Nota: el proyecto corre sobre Python 3.14, para el que (por ahora) solo hay
-# wheels de las versiones más recientes de numpy/pandas. Se fijan las versiones
-# instaladas que funcionan en este intérprete.
+# Dependencias compartidas por etl/ y model/ (el ETL y el motor de recomendación
+# corren en pandas/NumPy/scikit-learn puros, independientes del backend).
+# Para levantar la API instala además backend/requirements.txt (incluye estas
+# mismas librerías + FastAPI, SQLAlchemy y el driver de PostgreSQL).
 numpy>=2.5
 pandas>=3.0
 scikit-learn>=1.9
-streamlit>=1.59
-matplotlib
-plotly
-
-# Conector de base de datos
-# Por defecto se usa SQLite (incluido en la librería estándar de Python, no requiere instalación).
-# Si el equipo decide migrar a PostgreSQL, descomentar la siguiente línea:
-# psycopg2-binary

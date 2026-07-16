@@ -1,7 +1,7 @@
 # Datos
 
 Los archivos CSV de este proyecto no se suben al repositorio por su tamaño
-(~491.632 filas en `songs.csv`). Están ignorados en `.gitignore`.
+(~491.632 filas en `songs_final.csv`). Están ignorados en `.gitignore`.
 
 ## Dataset
 
@@ -14,7 +14,7 @@ Kaggle: https://www.kaggle.com/datasets/rodolfofigueroa/spotify-12m-songs
 2. Ingresar al link del dataset y descargar el `.zip` (botón "Download").
 3. Descomprimir el `.zip`.
 4. Copiar los siguientes archivos dentro de esta carpeta (`data/`):
-   - `songs.csv`
+   - `songs_final.csv`
    - `artists.csv`
 
 ## Archivos esperados
@@ -28,9 +28,8 @@ Kaggle: https://www.kaggle.com/datasets/rodolfofigueroa/spotify-12m-songs
 > contra `artists.id` — empareja el 100% del catálogo. La columna `artists` contiene
 > **nombres**, no IDs, por lo que no se usa para el JOIN.
 
-## Archivos generados (no versionados)
+## Destino de los datos
 
-El pipeline `python -m etl.load` produce, dentro de esta carpeta:
-
-- `processed_songs.csv` — catálogo enriquecido que carga la app.
-- `spotify.db` — base de datos SQLite poblada (ver `database/schema.sql`).
+`python -m etl.load` procesa estos CSV y puebla directamente **PostgreSQL** (ver
+`database/schema.sql`), configurada mediante `DATABASE_URL` en `.env` (plantilla
+en `.env.example` en la raíz del proyecto). No se generan archivos intermedios.

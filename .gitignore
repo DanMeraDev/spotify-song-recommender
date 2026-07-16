@@ -11,9 +11,16 @@ __pycache__/
 venv/
 .venv/
 
-# Bases de datos SQLite
+# Bases de datos SQLite (legado; el proyecto ahora usa PostgreSQL)
 *.db
+
+# Credenciales (ver .env.example para la plantilla)
+.env
 
 # Configuración de editores
 .vscode/
 .idea/
+
+# Frontend (Node.js)
+frontend/node_modules/
+frontend/dist/
