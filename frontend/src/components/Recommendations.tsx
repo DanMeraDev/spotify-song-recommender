@@ -1,4 +1,5 @@
 import type { RecommendedSong } from '../types'
+import { spotifySearchUrl, youtubeSearchUrl } from '../utils'
 
 export default function Recommendations({ items }: { items: RecommendedSong[] }) {
   return (
@@ -25,6 +26,24 @@ export default function Recommendations({ items }: { items: RecommendedSong[] })
             <span className="text-sm font-semibold text-green-400">
               {(song.score * 100).toFixed(1)}%
             </span>
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <a
+              href={youtubeSearchUrl(song.name, song.artists)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-red-400"
+            >
+              ▶ YouTube
+            </a>
+            <a
+              href={spotifySearchUrl(song.name, song.artists)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-green-400"
+            >
+              ● Spotify
+            </a>
           </div>
         </div>
       ))}

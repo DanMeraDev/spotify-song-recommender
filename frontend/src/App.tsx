@@ -7,6 +7,7 @@ import ScoreBreakdownChart from './components/ScoreBreakdownChart'
 import SearchBar from './components/SearchBar'
 import SongList from './components/SongList'
 import type { RecommendationResponse, SongSummary } from './types'
+import { spotifySearchUrl, youtubeSearchUrl } from './utils'
 
 const BATCH_SIZE = 50
 const DEBOUNCE_MS = 350
@@ -138,6 +139,24 @@ export default function App() {
                 <div className="text-xs tracking-wide text-zinc-500 uppercase">Canción base</div>
                 <div className="text-lg font-medium text-zinc-100">{selectedSong.name}</div>
                 <div className="text-sm text-zinc-400">{selectedSong.artists}</div>
+                <div className="mt-1 flex items-center gap-3">
+                  <a
+                    href={youtubeSearchUrl(selectedSong.name, selectedSong.artists)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-red-400"
+                  >
+                    ▶ YouTube
+                  </a>
+                  <a
+                    href={spotifySearchUrl(selectedSong.name, selectedSong.artists)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-green-400"
+                  >
+                    ● Spotify
+                  </a>
+                </div>
               </div>
               <label className="flex items-center gap-2 text-sm text-zinc-300">
                 <input
