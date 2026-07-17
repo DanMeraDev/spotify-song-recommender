@@ -59,14 +59,24 @@ spotify-song-recommender/
 
 ### 1. Base de datos (PostgreSQL)
 
-Copia `.env.example` a `.env` en la raíz y completa `DATABASE_URL` con las
-credenciales de tu instancia de PostgreSQL (por ejemplo, una en la nube:
-Supabase, Neon, Railway...):
+Copia `.env.example` a `.env` **en la raíz del proyecto** y completa `DATABASE_URL`
+con las credenciales de tu instancia de PostgreSQL (por ejemplo, una en la nube:
+Render, Supabase, Neon, Railway...):
 
 ```bash
 cp .env.example .env
 # editar .env con tus credenciales
 ```
+
+> **Si usas Render** (u otro proveedor que te da un link `postgresql://...`):
+> hay que ajustarlo antes de pegarlo en `.env`, porque el backend usa el driver
+> **psycopg3** vía SQLAlchemy:
+> 1. Cambia el esquema `postgresql://` por `postgresql+psycopg://`.
+> 2. Agrega `?sslmode=require` al final si no lo trae (Render exige SSL).
+> 3. Usa la **External Database URL** (no la Internal — esa solo funciona entre
+>    servicios dentro de la red de Render, no desde tu máquina).
+>
+> Formato final: `postgresql+psycopg://usuario:password@host/dbname?sslmode=require`
 
 ### 2. Backend (Python)
 
@@ -84,6 +94,17 @@ uvicorn backend.main:app --reload
 
 La API queda en `http://localhost:8000` (docs interactivas en `/docs`).
 
+> **Importante:** los comandos `uvicorn backend.main:app` y `python -m etl.load`
+> se corren **siempre desde la raíz del proyecto** (donde están las carpetas
+> `backend/`, `etl/`, `model/`, `data/`), **nunca desde adentro de una subcarpeta**
+> como `backend/` — si te paras dentro de `backend/` y corres `uvicorn
+> backend.main:app`, te va a tirar `ModuleNotFoundError: No module named
+> 'backend'` porque Python arma ese paquete relativo a donde estás parado.
+> Y también con el `venv` **activado** (`source venv/bin/activate`) — si no,
+> el sistema puede ofrecerte instalar un `uvicorn` del sistema operativo (ej.
+> `python3-uvicorn` vía `dnf`/`apt`) que no tiene el resto de las dependencias
+> del proyecto (FastAPI, SQLAlchemy, psycopg, pandas...) y va a fallar igual.
+
 ### 3. Frontend (React)
 
 ```bash
@@ -94,6 +115,21 @@ npm run dev
 
 La app queda en `http://localhost:5173` (el dev server proxea `/api` hacia el
 backend en el puerto 8000).
+
+## Volver a correr el ETL (`python -m etl.load`)
+
+Es seguro correrlo más de una vez: antes de cargar, hace `TRUNCATE` de las 4
+tablas (`artistas`, `canciones`, `generos`, `recomendaciones`) y las vuelve a
+poblar desde cero, así que **no se duplican datos** entre corridas.
+
+Ojo con dos cosas:
+- Ese `TRUNCATE` también **borra el historial de `recomendaciones`** que se
+  haya acumulado mientras alguien usaba la app (cada Top 5 generado se guarda
+  ahí). Si les interesa conservarlo para el informe/validación, respalden esa
+  tabla antes de volver a correr el ETL.
+- Si varias personas del equipo comparten la misma base de datos en la nube,
+  **coordinen quién corre el ETL** — la última corrida sobrescribe los datos
+  de las demás.
 
 ## Estado del proyecto
 
