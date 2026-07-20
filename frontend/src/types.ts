@@ -33,3 +33,8 @@ export interface RecommendationResponse {
   query: SongDetail
   recommendations: RecommendedSong[]
 }
+
+/** Entrada del historial de búsqueda (canciones consultadas en esta sesión/navegador). */
+export interface HistoryEntry extends SongSummary {
+  ts: number
+}
