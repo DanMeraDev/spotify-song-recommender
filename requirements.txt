@@ -1,7 +1,6 @@
 # Dependencias compartidas por etl/ y model/ (el ETL y el motor de recomendación
-# corren en pandas/NumPy/scikit-learn puros, independientes del backend).
+# corren en pandas/NumPy puros, sin scikit-learn, independientes del backend).
 # Para levantar la API instala además backend/requirements.txt (incluye estas
 # mismas librerías + FastAPI, SQLAlchemy y el driver de PostgreSQL).
 numpy>=2.5
 pandas>=3.0
-scikit-learn>=1.9

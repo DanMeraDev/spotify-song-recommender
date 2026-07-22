@@ -15,9 +15,8 @@ Ver model/formulas.md para el detalle matemático de cada término.
 import ast
 
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 
-from model.similarity import calculate_russell_mood_similarity
+from model.similarity import calculate_russell_mood_similarity, cosine_similarity_batch
 
 # Pesos calibrados de la fórmula multifactorial (deben sumar 1.0).
 WEIGHTS = {
@@ -29,6 +28,10 @@ WEIGHTS = {
 
 # Columnas normalizadas del vector acústico (generadas en el ETL).
 ACOUSTIC_COLS = ['danceability_n', 'energy_n', 'loudness_n', 'speechiness_n']
+
+# Tamaño mínimo de la ventana de candidatos que se materializa antes del dedup
+# (holgado para sobrevivir remixes/duplicados y aun así llegar a top_n).
+_MIN_WINDOW = 200
 
 
 def _parse_genres(genres_value):
@@ -54,13 +57,19 @@ def get_recommendations(query_song, catalog_df, top_n=5, discovery=False):
 
     Si discovery=True, el factor de popularidad se invierte (1 - Pop) para
     favorecer canciones menos conocidas ("modo descubrimiento").
+
+    Nota de memoria: el cálculo de similitud se hace sobre arreglos NumPy del
+    catálogo completo (barato, unos pocos MB), pero solo se materializa como
+    DataFrame una ventana pequeña de los mejores candidatos — nunca se copia
+    el catálogo entero (~491K filas), que en una instancia con memoria
+    limitada duplicaría el uso de RAM en cada solicitud.
     """
     n = len(catalog_df)
 
     # a) Similitud acústica: coseno entre vectores normalizados [0, 1].
     catalog_vectors = catalog_df[ACOUSTIC_COLS].to_numpy(dtype=float)
-    query_vector = np.array([query_song[c] for c in ACOUSTIC_COLS], dtype=float).reshape(1, -1)
-    sim_audio = cosine_similarity(catalog_vectors, query_vector).flatten()
+    query_vector = np.array([query_song[c] for c in ACOUSTIC_COLS], dtype=float)
+    sim_audio = cosine_similarity_batch(catalog_vectors, query_vector)
 
     # b) Similitud de mood: modelo de Russell (vectorizado).
     sim_mood = calculate_russell_mood_similarity(
@@ -96,24 +105,29 @@ def get_recommendations(query_song, catalog_df, top_n=5, discovery=False):
         + WEIGHTS['pop'] * sim_pop
     )
 
-    result_df = catalog_df.copy()
-    result_df['sim_audio'] = sim_audio
-    result_df['sim_mood'] = sim_mood
-    result_df['sim_genre'] = sim_genre
-    result_df['sim_pop'] = sim_pop
-    result_df['prediction_score'] = score
-
     # Excluir otras grabaciones de la MISMA canción consultada (mismo título y
     # artista principal, aunque tengan distinto id: remixes, versiones de álbum...).
     same_song = (
-        (result_df['name'] == query_song['name'])
-        & (result_df['primary_artist_id'] == query_song['primary_artist_id'])
+        (catalog_df['name'].to_numpy() == query_song['name'])
+        & (catalog_df['primary_artist_id'].to_numpy() == query_song['primary_artist_id'])
     )
-    result_df = result_df[~same_song]
+    score = np.where(same_song, -np.inf, score)
 
-    # Ordenar por afinidad y deduplicar recomendaciones repetidas (mismo título +
-    # artista), quedándonos con la de mayor score, antes de tomar el Top N.
-    result_df = result_df.sort_values(by='prediction_score', ascending=False)
+    # Top-k parcial en NumPy: solo materializamos como DataFrame una ventana
+    # pequeña de candidatos (holgada para el dedup posterior), no el catálogo completo.
+    window = min(n, max(top_n * 40, _MIN_WINDOW))
+    top_idx = np.argpartition(-score, window - 1)[:window]
+    top_idx = top_idx[np.argsort(-score[top_idx])]
+
+    result_df = catalog_df.iloc[top_idx].copy()
+    result_df['sim_audio'] = sim_audio[top_idx]
+    result_df['sim_mood'] = sim_mood[top_idx]
+    result_df['sim_genre'] = sim_genre[top_idx]
+    result_df['sim_pop'] = sim_pop[top_idx]
+    result_df['prediction_score'] = score[top_idx]
+
+    # Deduplicar recomendaciones repetidas (mismo título + artista), quedándonos
+    # con la de mayor score, antes de tomar el Top N (ya viene ordenado por score).
     result_df = result_df.drop_duplicates(subset=['name', 'primary_artist_id'], keep='first')
 
     return result_df.head(top_n)

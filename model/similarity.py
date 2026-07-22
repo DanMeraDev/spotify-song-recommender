@@ -14,7 +14,6 @@ Ver model/formulas.md para la justificación matemática completa.
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics.pairwise import cosine_similarity
 
 
 def normalize_minmax(data):
@@ -44,10 +43,32 @@ def calculate_cosine_similarity(vector_a, vector_b):
 
     Los vectores deben venir ya normalizados (ver normalize_minmax).
     """
-    v_a = np.array(vector_a).reshape(1, -1)
-    v_b = np.array(vector_b).reshape(1, -1)
-    # cosine_similarity devuelve una matriz 1x1; extraemos el escalar
-    return float(cosine_similarity(v_a, v_b)[0][0])
+    v_a = np.asarray(vector_a, dtype=float)
+    v_b = np.asarray(vector_b, dtype=float)
+    norm_a = np.linalg.norm(v_a) or 1.0
+    norm_b = np.linalg.norm(v_b) or 1.0
+    return float(np.dot(v_a, v_b) / (norm_a * norm_b))
+
+
+def cosine_similarity_batch(matrix, vector):
+    """
+    Similitud coseno entre cada fila de `matrix` (n, d) y un único `vector` (d,).
+
+    Implementación propia en NumPy (equivalente a
+    sklearn.metrics.pairwise.cosine_similarity para este caso) para no depender
+    de scikit-learn/scipy en el backend: esas librerías agregan ~70 MB solo al
+    importarlas, un costo demasiado alto en una instancia con memoria limitada
+    (el backend mantiene además todo el catálogo cargado en memoria).
+    """
+    matrix = np.asarray(matrix, dtype=float)
+    vector = np.asarray(vector, dtype=float).reshape(-1)
+
+    matrix_norms = np.linalg.norm(matrix, axis=1)
+    vector_norm = np.linalg.norm(vector) or 1.0
+    # Evita división entre cero en vectores nulos (mismo criterio que sklearn).
+    matrix_norms = np.where(matrix_norms == 0, 1.0, matrix_norms)
+
+    return (matrix @ vector) / (matrix_norms * vector_norm)
 
 
 def calculate_russell_mood_similarity(valence_c, energy_c, valence_q, energy_q):

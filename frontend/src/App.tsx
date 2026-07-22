@@ -2,6 +2,7 @@ import {
   BarChart3,
   Disc3,
   History,
+  Info,
   Lightbulb,
   PlayCircle,
   Search,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { fetchRecommendations, fetchSongs } from './api'
+import AlgorithmInfoModal from './components/AlgorithmInfoModal'
 import AudioRadarChart from './components/AudioRadarChart'
 import CommunityView from './components/CommunityView'
 import HistoryView from './components/HistoryView'
@@ -54,6 +56,7 @@ export default function App() {
   const [lastSection, setLastSection] = useState<SectionId>('catalogo')
   const [pendingScrollId, setPendingScrollId] = useState<SectionId | null>(null)
   const [hint, setHint] = useState<string | null>(null)
+  const [showAlgorithmInfo, setShowAlgorithmInfo] = useState(false)
 
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistoryFromStorage)
 
@@ -207,11 +210,15 @@ export default function App() {
                     <h2 className="text-2xl font-bold text-zinc-50">
                       Recomendador Musical Multifactorial
                     </h2>
-                    <p className="mt-1 text-sm text-zinc-400">
-                      Catálogo de {total.toLocaleString('es')} canciones ·{' '}
-                      <span className="text-violet-300">
-                        Score = 0.45·Audio + 0.25·Mood + 0.20·Género + 0.10·Popularidad
-                      </span>
+                    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-400">
+                      <span>Catálogo de {total.toLocaleString('es')} canciones</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowAlgorithmInfo(true)}
+                        className="inline-flex items-center gap-1 text-violet-300 underline decoration-dotted underline-offset-2 transition-colors hover:text-violet-200"
+                      >
+                        <Info className="h-3.5 w-3.5" /> Saber más sobre el algoritmo
+                      </button>
                     </p>
                   </div>
                   {selectedSong && (
@@ -413,6 +420,8 @@ export default function App() {
           contenido
         </footer>
       </div>
+
+      {showAlgorithmInfo && <AlgorithmInfoModal onClose={() => setShowAlgorithmInfo(false)} />}
     </div>
   )
 }
