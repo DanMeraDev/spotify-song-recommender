@@ -23,6 +23,8 @@ spotify-song-recommender/
 ├── .env.example          # plantilla de credenciales de PostgreSQL
 ├── docker-compose.yml    # orquesta backend + frontend en contenedores
 ├── .dockerignore
+├── deploy/
+│   └── deploy.sh          # script único de despliegue en una instancia EC2
 ├── data/                 # CSVs de origen (no versionados) + instrucciones de descarga
 ├── etl/                  # Extracción, transformación y carga a PostgreSQL
 │   ├── extract.py
@@ -166,6 +168,57 @@ Para ver logs o bajar los contenedores:
 ```bash
 docker compose logs -f
 docker compose down
+```
+
+## Despliegue en una instancia EC2 (AWS)
+
+Todo el proyecto (backend + frontend) corre en **una sola instancia** vía
+`docker compose` — no hace falta separar en varios servicios como en Render.
+
+### 1. Crear la instancia
+
+En la consola de EC2:
+
+- **AMI**: Amazon Linux 2023.
+- **Tipo de instancia**: `t3.micro` alcanza (el backend usa ~500 MB de RAM;
+  el script de despliegue agrega 2 GB de swap como red de seguridad). Si
+  notás lentitud, subí a `t3.small` sin cambiar nada más.
+- **Key pair**: creá uno nuevo y descargá el `.pem` — lo vas a necesitar para
+  conectarte por SSH.
+- **Security group**: abrí los puertos
+  - `22` (SSH) — desde tu IP.
+  - `80` (frontend) — desde `0.0.0.0/0`.
+  - `8000` (backend, opcional, para ver `/docs`) — desde `0.0.0.0/0`.
+
+### 2. Conectarte y desplegar
+
+```bash
+ssh -i tu-llave.pem ec2-user@<IP-pública-de-la-instancia>
+
+sudo dnf install -y git
+git clone https://github.com/DanMeraDev/spotify-song-recommender.git
+cd spotify-song-recommender
+bash deploy/deploy.sh
+```
+
+Como el repo es **público**, clonar no pide ningún token de GitHub.
+
+`deploy/deploy.sh` es un único script (idempotente, se puede correr de nuevo
+sin problema) que instala Docker, agrega 2 GB de swap, pide tu `DATABASE_URL`
+si no existe `.env` todavía, construye las imágenes y levanta los contenedores.
+**No corre el ETL automáticamente** (es destructivo — hace `TRUNCATE`); si tu
+`DATABASE_URL` ya apunta a una base ya poblada (por ejemplo, la misma que
+usaste en desarrollo), no hace falta volver a correrlo.
+
+Al terminar, la app queda en `http://<IP-pública-de-la-instancia>`.
+
+### 3. Actualizar tras un cambio en el repo
+
+```bash
+cd spotify-song-recommender
+git pull
+sudo docker compose build
+sudo docker compose up -d
 ```
 
 ## Volver a correr el ETL (`python -m etl.load`)
