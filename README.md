@@ -179,7 +179,7 @@ Todo el proyecto (backend + frontend) corre en **una sola instancia** vía
 
 En la consola de EC2:
 
-- **AMI**: Amazon Linux 2023.
+- **AMI**: Ubuntu 22.04 o 24.04 LTS.
 - **Tipo de instancia**: `t3.micro` alcanza (el backend usa ~500 MB de RAM;
   el script de despliegue agrega 2 GB de swap como red de seguridad). Si
   notás lentitud, subí a `t3.small` sin cambiar nada más.
@@ -193,9 +193,9 @@ En la consola de EC2:
 ### 2. Conectarte y desplegar
 
 ```bash
-ssh -i tu-llave.pem ec2-user@<IP-pública-de-la-instancia>
+ssh -i tu-llave.pem ubuntu@<IP-pública-de-la-instancia>
 
-sudo dnf install -y git
+sudo apt-get update && sudo apt-get install -y git
 git clone https://github.com/DanMeraDev/spotify-song-recommender.git
 cd spotify-song-recommender
 bash deploy/deploy.sh

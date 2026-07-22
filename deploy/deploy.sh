@@ -2,7 +2,7 @@
 #
 # deploy.sh
 #
-# Script único de despliegue para una instancia EC2 (Amazon Linux 2023).
+# Script único de despliegue para una instancia EC2 con Ubuntu (22.04/24.04).
 # Instala Docker, agrega swap de seguridad, pide las credenciales de la base
 # de datos si hace falta, construye las imágenes y levanta backend + frontend.
 #
@@ -19,25 +19,23 @@ cd "$REPO_ROOT"
 
 echo "==> Repositorio: $REPO_ROOT"
 
-# 1. Docker
+# 1. Docker + plugin de Compose, vía el instalador oficial de Docker (cubre
+#    Ubuntu/Debian por igual e instala docker-compose-plugin de una vez).
 if ! command -v docker &>/dev/null; then
     echo "==> Instalando Docker..."
-    sudo dnf update -y
-    sudo dnf install -y docker
-    sudo systemctl enable --now docker
+    sudo apt-get update -y
+    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+    sudo sh /tmp/get-docker.sh
+    rm -f /tmp/get-docker.sh
     sudo usermod -aG docker "$USER"
 else
     echo "==> Docker ya está instalado."
 fi
 
-# 2. Plugin de Docker Compose (docker compose, sin guion)
 if ! sudo docker compose version &>/dev/null; then
     echo "==> Instalando el plugin de Docker Compose..."
-    DOCKER_PLUGIN_DIR=/usr/local/lib/docker/cli-plugins
-    sudo mkdir -p "$DOCKER_PLUGIN_DIR"
-    sudo curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" \
-        -o "$DOCKER_PLUGIN_DIR/docker-compose"
-    sudo chmod +x "$DOCKER_PLUGIN_DIR/docker-compose"
+    sudo apt-get update -y
+    sudo apt-get install -y docker-compose-plugin
 else
     echo "==> Docker Compose ya está instalado."
 fi
