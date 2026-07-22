@@ -1,0 +1,21 @@
+# Git y entorno
+.git
+.env
+venv/
+
+# Python
+**/__pycache__/
+*.pyc
+
+# Datos pesados (se montan como volumen, no se copian a la imagen)
+data/*.csv
+data/*.db
+
+# Frontend: se instala/compila dentro del contenedor
+frontend/node_modules
+frontend/dist
+
+# Documentación y editores
+docs/
+.vscode/
+.idea/

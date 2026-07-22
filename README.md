@@ -21,6 +21,8 @@ filas). Los CSV no se versionan en este repositorio por su tamaño. Ver
 ```
 spotify-song-recommender/
 ├── .env.example          # plantilla de credenciales de PostgreSQL
+├── docker-compose.yml    # orquesta backend + frontend en contenedores
+├── .dockerignore
 ├── data/                 # CSVs de origen (no versionados) + instrucciones de descarga
 ├── etl/                  # Extracción, transformación y carga a PostgreSQL
 │   ├── extract.py
@@ -38,9 +40,12 @@ spotify-song-recommender/
 │   ├── db.py             # engine SQLAlchemy
 │   ├── catalog.py        # carga el catálogo desde PostgreSQL (cacheado en memoria)
 │   ├── schemas.py        # modelos Pydantic de las respuestas
-│   └── main.py           # endpoints
+│   ├── main.py           # endpoints
+│   └── Dockerfile
 ├── frontend/              # Vite + React + TypeScript + Tailwind + Recharts
-│   └── src/
+│   ├── src/
+│   ├── Dockerfile         # build multi-stage: Node -> Nginx
+│   └── nginx.conf
 └── docs/                  # Informe, validación y PDFs de referencia
     ├── informe_ieee/
     ├── formulario_SUS.md
@@ -115,6 +120,53 @@ npm run dev
 
 La app queda en `http://localhost:5173` (el dev server proxea `/api` hacia el
 backend en el puerto 8000).
+
+## Despliegue con Docker
+
+El proyecto está dockerizado: `backend/Dockerfile` (API FastAPI) y
+`frontend/Dockerfile` (build de Vite servido con Nginx, que además hace de
+proxy hacia el backend en `/api`). `docker-compose.yml` orquesta ambos.
+La base de datos **no** se dockeriza — se asume una instancia PostgreSQL ya
+existente (Render, Supabase, etc.), igual que en el desarrollo local.
+
+### 1. Configurar credenciales
+
+```bash
+cp .env.example .env
+# completar DATABASE_URL (ver la nota de Render más arriba)
+```
+
+### 2. Construir las imágenes
+
+```bash
+docker compose build
+```
+
+### 3. Poblar la base de datos (solo la primera vez, o cuando quieran refrescar los datos)
+
+```bash
+docker compose run --rm backend python -m etl.load
+```
+
+Esto monta `data/` como volumen de solo lectura dentro del contenedor — no hace
+falta reconstruir la imagen para correr el ETL, y los CSV pesados nunca se
+copian a la imagen.
+
+### 4. Levantar todo
+
+```bash
+docker compose up -d
+```
+
+- Frontend: `http://localhost` (puerto 80)
+- Backend: `http://localhost:8000` (docs en `/docs`)
+
+Para ver logs o bajar los contenedores:
+
+```bash
+docker compose logs -f
+docker compose down
+```
 
 ## Volver a correr el ETL (`python -m etl.load`)
 
